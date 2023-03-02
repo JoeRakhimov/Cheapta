@@ -16,28 +16,31 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun DestinationsScreen() {
-    Column(modifier = Modifier.fillMaxSize()) {
-        FromCityInput()
-        DestinationsList()
+fun DestinationsScreen(
+    viewModel: DestinationsViewModel = viewModel()
+) {
+
+    val destinationsState by viewModel.uiState.collectAsState()
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        DepartureCityInput()
+        DestinationsList(destinationsState.destinations)
     }
+
 }
 
-private val destinations = listOf(
-    Destination("Tashkent"),
-    Destination("Budapest"),
-    Destination("Malta"),
-    Destination("Lisbon")
-)
-
 @Composable
-fun FromCityInput() {
+fun DepartureCityInput() {
     val textValue = rememberSaveable { mutableStateOf("Budapest") }
     Log.d("CheapTag", textValue.value)
     val primaryColor = colorResource(id = R.color.black)
@@ -61,17 +64,28 @@ fun FromCityInput() {
 }
 
 @Composable
-fun DestinationsList() {
-    LazyColumn {
+fun DestinationsList(destinations: List<Destination>) {
+    Log.d("CheapTag", "Destinations: "+destinations.size)
+    LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(destinations) { item -> DestinationItem(item) }
     }
 }
 
 @Composable
-fun DestinationItem(destination: Destination, modifier: Modifier = Modifier) {
-    Column(modifier = Modifier.padding(8.dp)) {
+fun DestinationItem(destination: Destination) {
+    Log.d("CheapTag", "Destination: $destination")
+    Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
         Text(
-            text = destination.cityTo ?: "",
+            text = destination.cityToName ?: "",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = colorResource(id = R.color.black)
+        )
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentWidth(Alignment.End),
+            text = destination.price.toString(),
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = colorResource(id = R.color.black)

@@ -11,41 +11,21 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import javax.inject.Qualifier
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class HttpInterceptor
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class LoggingInterceptor
 
 @Module
 @InstallIn(SingletonComponent::class)
 class NetworkModule {
 
     @Provides
-    @HttpInterceptor
     fun provideHttpInterceptor(@ApplicationContext context: Context): Interceptor =
         ChuckerInterceptor.Builder(context).build()
 
     @Provides
-    @LoggingInterceptor
-    fun provideLoggingInterceptor(): Interceptor =
-        HttpLoggingInterceptor().apply { setLevel(HttpLoggingInterceptor.Level.BODY) }
-
-    @Provides
-    fun provideOkHttpClient(
-        @HttpInterceptor httpInterceptor: Interceptor,
-        @LoggingInterceptor loggingInterceptor: Interceptor
-    ): OkHttpClient =
+    fun provideOkHttpClient(httpInterceptor: Interceptor): OkHttpClient =
         OkHttpClient.Builder()
             .addInterceptor(httpInterceptor)
-            .addInterceptor(loggingInterceptor)
             .build()
 
     @Provides

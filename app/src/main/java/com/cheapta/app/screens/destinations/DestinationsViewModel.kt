@@ -1,27 +1,35 @@
 package com.cheapta.app.screens.destinations
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cheapta.app.data.Api
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.scopes.ViewModelScoped
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import retrofit2.http.GET
 import javax.inject.Inject
 
 @HiltViewModel
 class DestinationsViewModel @Inject constructor(
     private val api: Api
-): ViewModel() {
+) : ViewModel() {
 
-    private val _destinations = MutableLiveData<List<Destination>>()
-    val destinations: LiveData<List<Destination>> = _destinations
+    private val _uiState = MutableStateFlow(DestinationsState())
+    val uiState: StateFlow<DestinationsState> = _uiState.asStateFlow()
 
-    fun getDestinations() {
+    init {
+        getDestinations()
+    }
+
+    private fun getDestinations() {
+        _uiState.value = DestinationsState(loading = true)
         viewModelScope.launch {
-            _destinations.value = api.getDestinations()
+            val flyFrom = "BUD"
+            val flightType = "oneway"
+            val maxStops = 0
+            val destinations = api.getDestinations(flyFrom = flyFrom, flightType = flightType, maxStops = maxStops)
+            _uiState.value = DestinationsState(loading = false, destinations = destinations)
         }
     }
 
