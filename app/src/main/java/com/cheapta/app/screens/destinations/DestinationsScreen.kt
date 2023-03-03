@@ -1,6 +1,5 @@
 package com.cheapta.app.screens.destinations
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
@@ -18,8 +17,6 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,20 +29,20 @@ fun DestinationsScreen(
 
     val destinationsState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        DepartureCityInput()
+    Column(modifier = Modifier.fillMaxSize()) {
+        DepartureCityInput(destinationsState.query, onQueryChange = { query ->
+            viewModel.onQueryChange(query)
+        })
         DestinationsList(destinationsState.destinations)
     }
 
 }
 
 @Composable
-fun DepartureCityInput() {
-    val textValue = rememberSaveable { mutableStateOf("Budapest") }
-    Log.d("CheapTag", textValue.value)
+fun DepartureCityInput(query: String, onQueryChange: (String) -> Unit) {
     val primaryColor = colorResource(id = R.color.black)
     OutlinedTextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         label = { Text(text = stringResource(id = R.string.from)) },
         colors = TextFieldDefaults.outlinedTextFieldColors(
             focusedBorderColor = primaryColor,
@@ -56,16 +53,15 @@ fun DepartureCityInput() {
             keyboardType = KeyboardType.Text,
             capitalization = KeyboardCapitalization.Words
         ),
-        value = textValue.value,
-        onValueChange = {
-            textValue.value = it
+        value = query,
+        onValueChange = { value ->
+            onQueryChange(value)
         }
     )
 }
 
 @Composable
 fun DestinationsList(destinations: List<Destination>) {
-    Log.d("CheapTag", "Destinations: "+destinations.size)
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(destinations) { item -> DestinationItem(item) }
     }
@@ -73,8 +69,9 @@ fun DestinationsList(destinations: List<Destination>) {
 
 @Composable
 fun DestinationItem(destination: Destination) {
-    Log.d("CheapTag", "Destination: $destination")
-    Row(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .padding(16.dp)) {
         Text(
             text = destination.cityToName ?: "",
             fontSize = 22.sp,
