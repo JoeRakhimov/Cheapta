@@ -21,6 +21,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.lang.ProcessBuilder.Redirect.to
 
 @Composable
 fun DestinationsScreen(
@@ -37,6 +38,11 @@ fun DestinationsScreen(
         LocationsList(destinationsState.locations, onLocationSelected = { location ->
             viewModel.onLocationChange(location)
         })
+        if(destinationsState.locations.isEmpty()){
+            DestinationCityInput(query = "Everywhere", onQueryChange = {
+
+            })
+        }
         DestinationsList(destinationsState.destinations)
     }
 
@@ -52,7 +58,7 @@ fun DepartureCityInput(
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(start = 16.dp, end=16.dp, top = 16.dp),
         label = { Text(text = stringResource(id = R.string.from)) },
         colors = TextFieldDefaults.outlinedTextFieldColors(
             focusedBorderColor = primaryColor,
@@ -84,7 +90,9 @@ fun LocationItem(location: Location, onLocationSelected: (Location) -> Unit) {
             .clickable { onLocationSelected(location) }
     ) {
         Text(
-            modifier = Modifier.wrapContentWidth().padding(end = 8.dp),
+            modifier = Modifier
+                .wrapContentWidth()
+                .padding(end = 8.dp),
             text = location.flag ?: "",
             fontSize = 22.sp
         )
@@ -95,6 +103,32 @@ fun LocationItem(location: Location, onLocationSelected: (Location) -> Unit) {
             color = colorResource(id = R.color.black)
         )
     }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun DestinationCityInput(
+    query: String,
+    onQueryChange: (String) -> Unit
+) {
+    val primaryColor = colorResource(id = R.color.black)
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp),
+        label = { Text(text = stringResource(id = R.string.to)) },
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            focusedBorderColor = primaryColor,
+            focusedLabelColor = primaryColor,
+            cursorColor = primaryColor
+        ),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = KeyboardType.Text,
+            capitalization = KeyboardCapitalization.Words
+        ),
+        value = query,
+        onValueChange = onQueryChange
+    )
 }
 
 @Composable
@@ -112,7 +146,9 @@ fun DestinationItem(destination: Destination) {
             .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 8.dp)
     ) {
         Text(
-            modifier = Modifier.wrapContentWidth().padding(end = 8.dp),
+            modifier = Modifier
+                .wrapContentWidth()
+                .padding(end = 8.dp),
             text = destination.countryToFlag ?: "",
             fontSize = 22.sp
         )
