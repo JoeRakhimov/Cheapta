@@ -22,8 +22,8 @@ class DestinationsViewModel @Inject constructor(
     init {
         _uiState.value = DestinationsState()
         queryFlow.receiveAsFlow()
-            .filter { it.isNotEmpty() }
             .debounce(1000)
+            .filter { it.isNotEmpty() }
             .onEach(::getLocations)
             .launchIn(viewModelScope)
         getLocation()
@@ -37,19 +37,8 @@ class DestinationsViewModel @Inject constructor(
         }
     }
 
-    private fun getDestinations(location: Location) {
-        viewModelScope.launch {
-            val flyFrom = location.code
-            flyFrom?.let {
-                val destinations = repository.getDestinations(flyFrom = flyFrom)
-                _uiState.value =
-                    DestinationsState(query = location.name ?: "", destinations = destinations)
-            }
-        }
-    }
-
     fun onQueryChange(query: String) {
-        _uiState.value = DestinationsState(query = query, destinations = uiState.value.destinations)
+        _uiState.value = DestinationsState(query = query)
         queryFlow.trySend(query)
     }
 
@@ -58,9 +47,24 @@ class DestinationsViewModel @Inject constructor(
             val locations = repository.getLocations(query)
             _uiState.value = DestinationsState(
                 query = uiState.value.query,
-                locations = locations,
-                destinations = uiState.value.destinations
+                locations = locations
             )
+        }
+    }
+
+    fun onLocationChange(location: Location) {
+        _uiState.value = DestinationsState(query = location.name ?: "")
+        getDestinations(location)
+    }
+
+    private fun getDestinations(location: Location) {
+        viewModelScope.launch {
+            val flyFrom = location.code
+            flyFrom?.let {
+                val destinations = repository.getDestinations(flyFrom = flyFrom)
+                _uiState.value =
+                    DestinationsState(query = location.name ?: "", destinations = destinations)
+            }
         }
     }
 

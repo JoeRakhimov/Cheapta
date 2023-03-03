@@ -43,11 +43,17 @@ data class Destination(
     @field:SerializedName("country_from")
     val countryFrom: String? = null,
 
+    @field:SerializedName("country_from_flag")
+    val countryFromFlag: String? = null,
+
     @field:SerializedName("stops")
     val stops: Int? = null,
 
     @field:SerializedName("country_to")
     val countryTo: String? = null,
+
+    @field:SerializedName("country_to_flag")
+    val countryToFlag: String? = null,
 
     @field:SerializedName("fly_to")
     val flyTo: String? = null,
@@ -59,6 +65,6 @@ data class Destination(
     val ratio: Double? = null,
 
     @field:SerializedName("discount")
-    val discount: Double? = null
+    val discount: Double? = null,
 
 )

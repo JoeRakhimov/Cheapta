@@ -11,6 +11,9 @@ data class Location(
 	val code: String? = null,
 
 	@field:SerializedName("name")
-	val name: String? = null
+	val name: String? = null,
+
+	@field:SerializedName("flag")
+	val flag: String? = null,
 
 )
