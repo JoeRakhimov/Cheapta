@@ -39,17 +39,25 @@ class DestinationsViewModel @Inject constructor(
     }
 
     private fun getDepartureLocation() {
+        _uiState.value = DestinationsState(
+            departureLoading = true,
+        )
         viewModelScope.launch {
             val location = repository.getLocation()
             _uiState.value = DestinationsState(
-                queryDeparture = location.name ?: "",
+                departureQuery = location.name ?: "",
             )
             getDestinations(location)
         }
     }
 
     fun onDepartureQueryChange(query: String) {
-        _uiState.value = DestinationsState(queryDeparture = query)
+        _uiState.value = DestinationsState(
+            departureQuery = query,
+            destinationQuery = uiState.value.destinationQuery,
+            departureLoading = uiState.value.departureLoading,
+            destinationLoading = uiState.value.destinationLoading
+        )
         queryDepartureFlow.trySend(query)
     }
 
@@ -57,25 +65,31 @@ class DestinationsViewModel @Inject constructor(
         viewModelScope.launch {
             val locations = repository.getLocations(query)
             _uiState.value = DestinationsState(
-                queryDeparture = uiState.value.queryDeparture,
+                departureQuery = uiState.value.departureQuery,
+                destinationQuery = uiState.value.destinationQuery,
                 departureLocations = locations
             )
         }
     }
 
     fun onLocationChange(location: Location) {
-        _uiState.value = DestinationsState(queryDeparture = location.name ?: "")
+        _uiState.value = DestinationsState(departureQuery = location.name ?: "")
         getDestinations(location)
     }
 
     private fun getDestinations(location: Location) {
+        _uiState.value = DestinationsState(
+            departureQuery = uiState.value.departureQuery,
+            destinationLoading = true,
+            destinationQuery = uiState.value.destinationQuery,
+        )
         viewModelScope.launch {
             val flyFrom = location.code
             flyFrom?.let {
                 val destinations = repository.getDestinations(flyFrom = flyFrom)
                 _uiState.value =
                     DestinationsState(
-                        queryDeparture = location.name ?: "",
+                        departureQuery = location.name ?: "",
                         destinations = destinations,
                         filteredDestinations = destinations
                     )
@@ -87,9 +101,9 @@ class DestinationsViewModel @Inject constructor(
         val filteredDestinations =
             _uiState.value.destinations.filter { it.cityToName?.startsWith(query, true) == true }
         _uiState.value = DestinationsState(
-            queryDeparture = _uiState.value.queryDeparture,
+            departureQuery = _uiState.value.departureQuery,
             destinations = _uiState.value.destinations,
-            queryDestination = query,
+            destinationQuery = query,
             filteredDestinations = filteredDestinations
         )
         if (filteredDestinations.isEmpty()) {
@@ -98,12 +112,17 @@ class DestinationsViewModel @Inject constructor(
     }
 
     private fun getDestinationLocations(query: String) {
+        _uiState.value = DestinationsState(
+            destinationLoading = true,
+            departureQuery = uiState.value.departureQuery,
+            destinationQuery = uiState.value.destinationQuery,
+        )
         viewModelScope.launch {
             val locations = repository.getLocations(query)
             _uiState.value = DestinationsState(
-                queryDeparture = uiState.value.queryDeparture,
+                departureQuery = uiState.value.departureQuery,
                 destinations = uiState.value.destinations,
-                queryDestination = uiState.value.queryDestination,
+                destinationQuery = uiState.value.destinationQuery,
                 destinationLocations = locations
             )
         }

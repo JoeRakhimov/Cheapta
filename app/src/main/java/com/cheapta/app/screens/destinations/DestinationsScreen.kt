@@ -1,5 +1,6 @@
 package com.cheapta.app.screens.destinations
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,7 +43,8 @@ fun DestinationsScreen(
 
         CitySearchInput(
             label = stringResource(id = R.string.from),
-            query = destinationsState.queryDeparture,
+            query = destinationsState.departureQuery,
+            inProgress = destinationsState.departureLoading,
             onQueryChange = { query ->
                 viewModel.onDepartureQueryChange(query)
             })
@@ -53,7 +55,8 @@ fun DestinationsScreen(
 
         CitySearchInput(
             label = stringResource(id = R.string.to),
-            query = destinationsState.queryDestination ?: stringResource(id = R.string.everywhere),
+            query = destinationsState.destinationQuery ?: stringResource(id = R.string.everywhere),
+            inProgress = destinationsState.destinationLoading,
             onQueryChange = { query ->
                 viewModel.onDestinationQueryChange(query)
             })
@@ -74,6 +77,7 @@ fun DestinationsScreen(
 fun CitySearchInput(
     label: String,
     query: String,
+    inProgress: Boolean,
     onQueryChange: (String) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -96,7 +100,14 @@ fun CitySearchInput(
         value = query,
         onValueChange = onQueryChange,
         trailingIcon = {
-            if (query.isNotEmpty()) {
+            if(inProgress){
+                CircularProgressIndicator(
+                    modifier = Modifier.then(Modifier.size(24.dp)),
+                    color = colorResource(
+                        id = R.color.black
+                    )
+                )
+            } else if (query.isNotEmpty()) {
                 Icon(
                     Icons.Default.Clear,
                     contentDescription = "Clear",
