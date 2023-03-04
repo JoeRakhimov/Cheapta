@@ -2,4 +2,6 @@
     <string name="app_name">Cheapta</string>
     <string name="from">From</string>
     <string name="to">To</string>
+    <string name="clear">Clear</string>
+    <string name="everywhere">Everywhere</string>
 </resources>

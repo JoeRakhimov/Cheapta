@@ -14,14 +14,18 @@ import com.cheapta.app.R
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
-import java.lang.ProcessBuilder.Redirect.to
 
 @Composable
 fun DestinationsScreen(
@@ -30,36 +34,56 @@ fun DestinationsScreen(
 
     val destinationsState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        DepartureCityInput(destinationsState.query,
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 8.dp)
+    ) {
+
+        CitySearchInput(
+            label = stringResource(id = R.string.from),
+            query = destinationsState.queryDeparture,
             onQueryChange = { query ->
-                viewModel.onQueryChange(query)
+                viewModel.onDepartureQueryChange(query)
             })
-        LocationsList(destinationsState.locations, onLocationSelected = { location ->
+
+        LocationsList(destinationsState.departureLocations, onLocationSelected = { location ->
             viewModel.onLocationChange(location)
         })
-        if(destinationsState.locations.isEmpty()){
-            DestinationCityInput(query = "Everywhere", onQueryChange = {
+
+        CitySearchInput(
+            label = stringResource(id = R.string.to),
+            query = destinationsState.queryDestination ?: stringResource(id = R.string.everywhere),
+            onQueryChange = { query ->
+                viewModel.onDestinationQueryChange(query)
+            })
+
+        if (destinationsState.destinationLocations.isNotEmpty()) {
+            LocationsList(destinationsState.destinationLocations, onLocationSelected = { location ->
 
             })
+        } else {
+            DestinationsList(destinationsState.filteredDestinations)
         }
-        DestinationsList(destinationsState.destinations)
+
     }
 
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun DepartureCityInput(
+fun CitySearchInput(
+    label: String,
     query: String,
     onQueryChange: (String) -> Unit
 ) {
+    val focusRequester = remember { FocusRequester() }
     val primaryColor = colorResource(id = R.color.black)
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end=16.dp, top = 16.dp),
-        label = { Text(text = stringResource(id = R.string.from)) },
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .focusRequester(focusRequester),
+        label = { Text(text = label) },
         colors = TextFieldDefaults.outlinedTextFieldColors(
             focusedBorderColor = primaryColor,
             focusedLabelColor = primaryColor,
@@ -70,24 +94,46 @@ fun DepartureCityInput(
             capitalization = KeyboardCapitalization.Words
         ),
         value = query,
-        onValueChange = onQueryChange
+        onValueChange = onQueryChange,
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                Icon(
+                    Icons.Default.Clear,
+                    contentDescription = "Clear",
+                    modifier = Modifier
+                        .clickable {
+                            onQueryChange("")
+                            focusRequester.requestFocus()
+                        }
+                )
+            }
+        }
     )
 }
 
 @Composable
 fun LocationsList(locations: List<Location>, onLocationSelected: (Location) -> Unit) {
-    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(locations) { item -> LocationItem(item, onLocationSelected) }
+    if (locations.isNotEmpty()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 12.dp)
+        ) {
+            items(locations) { item -> LocationItem(item, onLocationSelected) }
+        }
     }
 }
 
 @Composable
 fun LocationItem(location: Location, onLocationSelected: (Location) -> Unit) {
+    val focusManager = LocalFocusManager.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 8.dp)
-            .clickable { onLocationSelected(location) }
+            .padding(8.dp)
+            .clickable {
+                focusManager.clearFocus()
+                onLocationSelected(location)
+            }
     ) {
         Text(
             modifier = Modifier
@@ -103,32 +149,6 @@ fun LocationItem(location: Location, onLocationSelected: (Location) -> Unit) {
             color = colorResource(id = R.color.black)
         )
     }
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun DestinationCityInput(
-    query: String,
-    onQueryChange: (String) -> Unit
-) {
-    val primaryColor = colorResource(id = R.color.black)
-    OutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp),
-        label = { Text(text = stringResource(id = R.string.to)) },
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            focusedBorderColor = primaryColor,
-            focusedLabelColor = primaryColor,
-            cursorColor = primaryColor
-        ),
-        keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = KeyboardType.Text,
-            capitalization = KeyboardCapitalization.Words
-        ),
-        value = query,
-        onValueChange = onQueryChange
-    )
 }
 
 @Composable
