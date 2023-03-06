@@ -1,6 +1,5 @@
 package com.cheapta.app.screens.destinations
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,7 +32,7 @@ fun DestinationsScreen(
     viewModel: DestinationsViewModel = viewModel()
 ) {
 
-    val destinationsState by viewModel.uiState.collectAsState()
+    val destinationsState by viewModel.state.collectAsState()
 
     Column(
         modifier = Modifier
@@ -46,11 +45,11 @@ fun DestinationsScreen(
             query = destinationsState.departureQuery,
             inProgress = destinationsState.departureLoading,
             onQueryChange = { query ->
-                viewModel.onDepartureQueryChange(query)
+                viewModel.handleIntent(DestinationsIntent.DepartureQuery(query))
             })
 
         LocationsList(destinationsState.departureLocations, onLocationSelected = { location ->
-            viewModel.onLocationChange(location)
+            viewModel.handleIntent(DestinationsIntent.LocationChange(location))
         })
 
         CitySearchInput(
@@ -58,16 +57,15 @@ fun DestinationsScreen(
             query = destinationsState.destinationQuery ?: stringResource(id = R.string.everywhere),
             inProgress = destinationsState.destinationLoading,
             onQueryChange = { query ->
-                viewModel.onDestinationQueryChange(query)
+                viewModel.handleIntent(DestinationsIntent.DestinationQuery(query))
             })
 
-        if (destinationsState.destinationLocations.isNotEmpty()) {
-            LocationsList(destinationsState.destinationLocations, onLocationSelected = { location ->
+        LocationsList(destinationsState.destinationLocations, onLocationSelected = { location ->
 
-            })
-        } else {
-            DestinationsList(destinationsState.filteredDestinations)
-        }
+        })
+
+        DestinationsList(destinationsState.destinationsToShow)
+
 
     }
 
