@@ -2,11 +2,12 @@ package com.cheapta.app.repository
 
 import com.cheapta.app.screens.destinations.Destination
 import com.cheapta.app.screens.destinations.Location
+import com.cheapta.app.data.Result
 
 interface Repository {
 
-    suspend fun getLocation(): Location
-    suspend fun getLocations(query: String): List<Location>
-    suspend fun getDestinations(flyFrom: String): List<Destination>
+    suspend fun getLocation(): Result<Location>
+    suspend fun getLocations(query: String): Result<List<Location>>
+    suspend fun getDestinations(flyFrom: String): Result<List<Destination>>
 
 }

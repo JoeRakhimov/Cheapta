@@ -1,7 +1,9 @@
 package com.cheapta.app.screens.destinations
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cheapta.app.data.Result
 import com.cheapta.app.repository.Repository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -26,6 +28,7 @@ data class DestinationsState(
     val destinationLoading: Boolean = false,
     val destinationsToShow: List<Destination> = emptyList(),
     val destinationLocations: List<Location> = emptyList(),
+    val errorMessage: String? = null
 )
 
 @HiltViewModel
@@ -33,10 +36,13 @@ class DestinationsViewModel @Inject constructor(
     private val repository: Repository
 ) : ViewModel() {
 
-    private val intents = Channel<DestinationsIntent>()
+    val intents = Channel<DestinationsIntent>()
 
     private val _state = MutableStateFlow(DestinationsState())
     val state: StateFlow<DestinationsState> = _state.asStateFlow()
+
+    private val _toastMessage = MutableSharedFlow<String?>()
+    val toastMessage: SharedFlow<String?> = _toastMessage.asSharedFlow()
 
     private val departureQueryFlow = Channel<String>()
     private val destinationQueryFlow = Channel<String>()
@@ -55,15 +61,11 @@ class DestinationsViewModel @Inject constructor(
             .onEach(::getDestinationLocations)
             .launchIn(viewModelScope)
 
-        getDepartureLocation()
-
-    }
-
-    init {
         intents.receiveAsFlow()
             .onEach(::updateState)
             .launchIn(viewModelScope)
         intents.trySend(DestinationsIntent.GetLocation)
+
     }
 
     fun handleIntent(intent: DestinationsIntent) {
@@ -82,9 +84,18 @@ class DestinationsViewModel @Inject constructor(
     private fun getDepartureLocation() {
         _state.update { it.copy(departureLoading = true) }
         viewModelScope.launch {
-            val location = repository.getLocation()
-            _state.update { it.copy(departureLoading = false) }
-            onLocationChange(location)
+            val result = repository.getLocation()
+            when (result) {
+                is Result.Success -> {
+                    _state.update { it.copy(departureLoading = false) }
+                    onLocationChange(result.data)
+                }
+                is Result.Error -> {
+                    _state.update { it.copy(departureLoading = false) }
+                    _toastMessage.emit(result.exception.message)
+                }
+            }
+
         }
     }
 
@@ -93,14 +104,23 @@ class DestinationsViewModel @Inject constructor(
         viewModelScope.launch {
             val flyFrom = location.code
             flyFrom?.let {
-                val destinations = repository.getDestinations(flyFrom = flyFrom)
-                _state.update {
-                    it.copy(
-                        destinationLoading = false,
-                        allDestinations = destinations,
-                        destinationsToShow = destinations
-                    )
+                val result = repository.getDestinations(flyFrom = flyFrom)
+                when (result) {
+                    is Result.Success -> {
+                        _state.update {
+                            it.copy(
+                                destinationLoading = false,
+                                allDestinations = result.data,
+                                destinationsToShow = result.data
+                            )
+                        }
+                    }
+                    is Result.Error -> {
+                        _state.update { it.copy(destinationLoading = false) }
+                        _toastMessage.emit(result.exception.message)
+                    }
                 }
+
             }
         }
     }
@@ -113,13 +133,22 @@ class DestinationsViewModel @Inject constructor(
     private fun getDepartureLocations(query: String) {
         _state.update { it.copy(departureLoading = true) }
         viewModelScope.launch {
-            val locations = repository.getLocations(query)
-            _state.update {
-                it.copy(
-                    departureLoading = false,
-                    departureLocations = locations
-                )
+            val result = repository.getLocations(query)
+            when (result) {
+                is Result.Success -> {
+                    _state.update {
+                        it.copy(
+                            departureLoading = false,
+                            departureLocations = result.data
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    _state.update { it.copy(departureLoading = false) }
+                    _toastMessage.emit(result.exception.message)
+                }
             }
+
         }
     }
 
@@ -135,10 +164,12 @@ class DestinationsViewModel @Inject constructor(
     }
 
     private fun onDestinationQueryChange(query: String) {
-        _state.update { it.copy(
-            destinationQuery = query,
-            destinationLocations = emptyList()
-        ) }
+        _state.update {
+            it.copy(
+                destinationQuery = query,
+                destinationLocations = emptyList()
+            )
+        }
         val filteredDestinations =
             _state.value.allDestinations.filter { it.cityToName?.startsWith(query, true) == true }
         _state.update { it.copy(destinationsToShow = filteredDestinations) }
@@ -148,13 +179,22 @@ class DestinationsViewModel @Inject constructor(
     private fun getDestinationLocations(query: String) {
         _state.update { it.copy(destinationLoading = true) }
         viewModelScope.launch {
-            val locations = repository.getLocations(query)
-            _state.update {
-                it.copy(
-                    destinationLoading = false,
-                    destinationLocations = locations
-                )
+            val result = repository.getLocations(query)
+            when (result) {
+                is Result.Success -> {
+                    _state.update {
+                        it.copy(
+                            destinationLoading = false,
+                            destinationLocations = result.data
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    _state.update { it.copy(destinationLoading = false) }
+                    _toastMessage.emit(result.exception.message)
+                }
             }
+
         }
     }
 
